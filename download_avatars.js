@@ -1,3 +1,9 @@
+var input = process.argv.slice(2);
+if (input.length !== 2) {
+  console.log("Usage: download_avatars.js <owner> <repo>");
+  return false;
+}
+
 var request = require('request');
 var fs = require('fs');
 
@@ -31,7 +37,7 @@ function downloadImageByURL(url, filePath) {
     });
 }
 
-getRepoContributors("jquery", "jquery", function(err, result) {
+getRepoContributors(input[0], input[1], function(err, result) {
   if (err) console.log("Errors:", err);
   result.forEach(function (user) {
     downloadImageByURL(user.avatar_url, "avatars/" + user.login);
