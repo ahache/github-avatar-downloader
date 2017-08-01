@@ -1,12 +1,25 @@
 var input = process.argv.slice(2);
 if (input.length !== 2) {
-  console.log("Usage: download_avatars.js <owner> <repo>");
-  return false;
+  throw 'Usage: download_avatars.js <owner> <repo>';
 }
 
 require('dotenv').config();
 var request = require('request');
 var fs = require('fs');
+
+var envFile = ".env";
+if (!fs.existsSync(envFile)) {
+  throw ".env file does not exist";
+}
+
+var store = "avatars/";
+if (!fs.existsSync(store)) {
+  throw "avatars directory does not exist";
+}
+
+if (!process.env.GITHUB_USER || !process.env.GITHUB_TOKEN) {
+  throw "Missing environment variables";
+}
 
 console.log('Welcome to the GitHub Avatar Downloader!');
 
@@ -19,6 +32,13 @@ function getRepoContributors(repoOwner, repoName, cb) {
     }
   }
   request(options, function (err, response, body) {
+    if (response.statusCode === 401) {
+      throw "Improper credentials";
+    }
+    if (response.statusCode !== 200) {
+      console.log("Repository does not exist, check input");
+      return false;
+    }
     var contributors = JSON.parse(body);
     cb(err, contributors);
   });
@@ -36,8 +56,11 @@ function downloadImageByURL(url, filePath) {
 }
 
 getRepoContributors(input[0], input[1], function(err, result) {
-  if (err) console.log("Errors:", err);
+  if (err) {
+    console.log("Errors:", err);
+    return false;
+  }
   result.forEach(function (user) {
-    downloadImageByURL(user.avatar_url, "avatars/" + user.login);
+    downloadImageByURL(user.avatar_url, store + user.login);
   });
 });
